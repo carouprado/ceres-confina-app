@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ceres Confina | Painel de Implantação Senior e Fechamento Contábil</title>
+<link rel="stylesheet" href="styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="logo.png" alt="Ceres Confina" class="logo-img" />
+    <div class="brand-text">
+      <h1>Ceres Confina</h1>
+      <p>Painel de Implantação &amp; Fechamento Contábil-Fiscal</p>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="projeto">Projeto de Implantação</button>
+    <button class="tab-btn" data-tab="fechamento">Fechamento Mensal</button>
+    <button class="tab-btn" data-tab="raci">Responsabilidades</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dashboard" class="tab-panel active">
+    <h2>Visão Geral</h2>
+    <div class="cards-grid" id="dashboardCards"></div>
+
+    <div class="panel">
+      <h3>Progresso do Projeto por Módulo</h3>
+      <div id="dashboardProjectBars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Fechamento do Mês Corrente</h3>
+      <div id="dashboardClosingBars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Pendências em Atraso</h3>
+      <div id="dashboardOverdue"></div>
+    </div>
+  </section>
+
+  <!-- PROJETO -->
+  <section id="tab-projeto" class="tab-panel">
+    <div class="section-header">
+      <h2>Projeto de Implantação do Sistema</h2>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnNewTask">+ Nova Tarefa</button>
+        <button class="btn" id="btnExportProject">Exportar CSV</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <select id="filterFase"><option value="">Todas as fases</option></select>
+      <select id="filterModulo">
+        <option value="">Todos os módulos</option>
+        <option value="Financeiro">Financeiro</option>
+        <option value="Contábil">Contábil</option>
+        <option value="Fiscal">Fiscal</option>
+        <option value="Geral">Geral</option>
+      </select>
+      <select id="filterResponsavel"><option value="">Todos os responsáveis</option></select>
+      <select id="filterStatus">
+        <option value="">Todos os status</option>
+        <option value="Não iniciado">Não iniciado</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Bloqueado">Bloqueado</option>
+        <option value="Concluído">Concluído</option>
+      </select>
+    </div>
+
+    <table class="data-table" id="projectTable">
+      <thead>
+        <tr>
+          <th>Fase</th><th>Módulo</th><th>Tarefa</th><th>Responsável</th>
+          <th>Status</th><th>Previsto</th><th>Realizado</th><th>Obs.</th><th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- FECHAMENTO -->
+  <section id="tab-fechamento" class="tab-panel">
+    <div class="section-header">
+      <h2>Fechamento Mensal Contábil e Fiscal</h2>
+      <div class="actions">
+        <select id="monthSelector"></select>
+        <button class="btn" id="btnNewMonth">+ Novo Mês</button>
+        <button class="btn btn-primary" id="btnNewClosingItem">+ Novo Item</button>
+        <button class="btn" id="btnExportClosing">Exportar CSV</button>
+        <button class="btn" id="btnPrintClosing">Imprimir</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <select id="filterArea">
+        <option value="">Todas as áreas</option>
+        <option value="Financeiro">Financeiro</option>
+        <option value="Contábil">Contábil</option>
+        <option value="Fiscal">Fiscal</option>
+      </select>
+      <select id="filterClosingStatus">
+        <option value="">Todos os status</option>
+        <option value="Pendente">Pendente</option>
+        <option value="Em andamento">Em andamento</option>
+        <option value="Em validação">Em validação</option>
+        <option value="Aprovado">Aprovado</option>
+      </select>
+    </div>
+
+    <div id="closingGroups"></div>
+  </section>
+
+  <!-- RACI -->
+  <section id="tab-raci" class="tab-panel">
+    <h2>Matriz de Responsabilidades (RACI)</h2>
+    <p class="hint">R = Responsável pela execução · A = Aprova/valida (Accountable) · C = Consultado · I = Informado</p>
+    <table class="data-table" id="raciTable">
+      <thead>
+        <tr><th>Atividade</th><th>R</th><th>A</th><th>C</th><th>I</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Fluxo de Responsabilidades no Fechamento Mensal</h3>
+    <pre class="mermaid">
+flowchart LR
+  A[Financeiro\nlança títulos a pagar e a receber] --> B[Contabilidade\nconcilia e valida lançamentos]
+  D[Fiscal\nentrada e saída de notas + estoque] --> E[Fiscal\napura impostos]
+  B --> C[Contabilidade\nlança imobilizado, CPRF e confere contas]
+  E --> C
+  C --> F[Controller / Gerente\nconsolida o fechamento mensal]
+  F --> G{Aprovado?}
+  G -- Não --> B
+  G -- Sim --> H[Diretoria\nfechamento comunicado]
+    </pre>
+  </section>
+
+</main>
+
+<!-- Diálogo de Tarefa do Projeto -->
+<dialog id="taskDialog">
+  <form method="dialog" id="taskForm">
+    <h3 id="taskDialogTitle">Nova Tarefa</h3>
+    <input type="hidden" id="taskId" />
+    <label>Fase
+      <input type="text" id="taskFase" list="faseOptions" required />
+      <datalist id="faseOptions"></datalist>
+    </label>
+    <label>Módulo
+      <select id="taskModulo">
+        <option>Financeiro</option><option>Contábil</option><option>Fiscal</option><option>Geral</option>
+      </select>
+    </label>
+    <label>Tarefa <input type="text" id="taskDescricao" required /></label>
+    <label>Responsável <input type="text" id="taskResponsavel" required /></label>
+    <label>Status
+      <select id="taskStatus">
+        <option>Não iniciado</option><option>Em andamento</option><option>Bloqueado</option><option>Concluído</option>
+      </select>
+    </label>
+    <label>Data prevista <input type="date" id="taskPrevisto" /></label>
+    <label>Data realizada <input type="date" id="taskReal" /></label>
+    <label>Observações <textarea id="taskObs"></textarea></label>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="taskCancel">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="taskDelete" style="display:none">Excluir</button>
+      <button type="submit" class="btn btn-primary" id="taskSave">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Diálogo de Item de Fechamento -->
+<dialog id="closingDialog">
+  <form method="dialog" id="closingForm">
+    <h3 id="closingDialogTitle">Novo Item de Fechamento</h3>
+    <input type="hidden" id="closingId" />
+    <label>Área
+      <select id="closingArea">
+        <option>Financeiro</option><option>Contábil</option><option>Fiscal</option>
+      </select>
+    </label>
+    <label>Tarefa <input type="text" id="closingDescricao" required /></label>
+    <label>Responsável <input type="text" id="closingResponsavel" required /></label>
+    <label>Status
+      <select id="closingStatus">
+        <option>Pendente</option><option>Em andamento</option><option>Em validação</option><option>Aprovado</option>
+      </select>
+    </label>
+    <label>Prazo <input type="date" id="closingPrazo" /></label>
+    <label>Validado por <input type="text" id="closingValidadoPor" placeholder="Ex: Contabilidade / Controller" /></label>
+    <label>Comentário <textarea id="closingComentario"></textarea></label>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="closingCancel">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="closingDelete" style="display:none">Excluir</button>
+      <button type="submit" class="btn btn-primary" id="closingSave">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
