@@ -5,6 +5,7 @@
    ============================================================ */
 
 const STORAGE_KEY = "ceresConfinaData_v1";
+const SUPABASE_STATE_ID = "ceres-confina";
 
 let state = {
   project: [],
@@ -14,13 +15,60 @@ let state = {
 
 /* ---------- Persistência ---------- */
 
-function loadData() {
+async function loadData() {
+  // Primeiro prepara uma cópia local para o site nunca ficar vazio.
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
-    state = JSON.parse(raw);
+    try {
+      state = JSON.parse(raw);
+    } catch (error) {
+      console.error("Dados locais inválidos:", error);
+      seedData();
+    }
   } else {
     seedData();
-    saveData();
+  }
+  normalizeState();
+  saveData();
+  // Depois busca a versão compartilhada.
+  try {
+    if (!window.ceresSupabase) {
+      throw new Error("Cliente do Supabase não foi carregado.");
+    }
+    const { data, error } = await window.ceresSupabase
+      .from("app_state")
+      .select("data")
+      .eq("id", SUPABASE_STATE_ID)
+      .maybeSingle();
+    if (error) throw error;
+    if (data && data.data) {
+      state = data.data;
+      normalizeState();
+      saveData();
+    }
+  } catch (error) {
+    console.error("Não foi possível carregar os dados compartilhados:", error);
+    showConnectionError();
+  }
+
+}
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function normalizeState() {
+  if (!state || typeof state !== "object") {
+    state = {
+      project: [],
+      closings: {},
+      currentMonth: null,
+    };
+  }
+  if (!Array.isArray(state.project)) {
+    state.project = [];
+  }
+  if (!state.closings || typeof state.closings !== "object") {
+    state.closings = {};
   }
   if (!state.currentMonth) {
     state.currentMonth = currentMonthKey();
@@ -29,9 +77,83 @@ function loadData() {
     createMonth(state.currentMonth, false);
   }
 }
-
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+function renderAll() {
+  renderDashboard();
+  renderProject();
+  renderClosing();
+}
+function showConnectionError() {
+  setSaveStatus(
+    "projectSaveStatus",
+    "Sem conexão",
+    "error"
+  );
+  setSaveStatus(
+    "closingSaveStatus",
+    "Sem conexão",
+    "error"
+  );
+}
+async function saveSharedData(buttonId, statusId) {
+  const button = document.getElementById(buttonId);
+  if (!window.ceresSupabase) {
+    setSaveStatus(statusId, "Supabase indisponível", "error");
+    return;
+  }
+  button.disabled = true;
+  setSaveStatus(statusId, "Salvando...", "");
+  // Mantém uma cópia de segurança no navegador.
+  saveData();
+  try {
+    const { error } = await window.ceresSupabase
+      .from("app_state")
+      .upsert(
+        {
+          id: SUPABASE_STATE_ID,
+          data: state,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "id",
+        }
+      );
+    if (error) throw error;
+    setSaveStatus(statusId, "Salvo", "success");
+  } catch (error) {
+    console.error("Erro ao salvar no Supabase:", error);
+    setSaveStatus(statusId, "Erro ao salvar", "error");
+  } finally {
+    button.disabled = false;
+  }
+}
+function setSaveStatus(elementId, message, type) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  element.textContent = message;
+  element.classList.remove("success", "error");
+  if (type) {
+    element.classList.add(type);
+  }
+  if (type === "success") {
+    window.setTimeout(() => {
+      if (element.textContent === message) {
+        element.textContent = "";
+        element.classList.remove("success");
+      }
+    }, 3000);
+  }
+}
+function markPendingChanges() {
+  setSaveStatus(
+    "projectSaveStatus",
+    "Alterações pendentes",
+    ""
+  );
+  setSaveStatus(
+    "closingSaveStatus",
+    "Alterações pendentes",
+    ""
+  );
 }
 
 function seedData() {
@@ -224,6 +346,7 @@ function saveTask() {
   document.getElementById("taskDialog").close();
   renderProject();
   renderDashboard();
+  markPendingChanges();
 }
 
 function deleteTask() {
@@ -233,6 +356,7 @@ function deleteTask() {
   document.getElementById("taskDialog").close();
   renderProject();
   renderDashboard();
+  markPendingChanges();
 }
 
 function exportProjectCSV() {
@@ -334,6 +458,7 @@ function deleteClosingItem() {
   document.getElementById("closingDialog").close();
   renderClosing();
   renderDashboard();
+  markPendingChanges();
 }
 
 function exportClosingCSV() {
@@ -375,14 +500,17 @@ function renderRaci() {
 
 /* ---------- Inicialização ---------- */
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadData();
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadData();
 
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => showTab(btn.dataset.tab));
   });
 
   // Projeto
+  document.getElementById("btnSaveProject").addEventListener("click", () => {
+  saveSharedData("btnSaveProject", "projectSaveStatus");
+});
   document.getElementById("btnNewTask").addEventListener("click", () => openTaskDialog(null));
   document.getElementById("btnExportProject").addEventListener("click", exportProjectCSV);
   document.getElementById("taskCancel").addEventListener("click", () => document.getElementById("taskDialog").close());
@@ -396,6 +524,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("monthSelector").addEventListener("change", (e) => {
     state.currentMonth = e.target.value; saveData(); renderClosing(); renderDashboard();
   });
+  document.getElementById("btnSaveClosing").addEventListener("click", () => {
+  saveSharedData("btnSaveClosing", "closingSaveStatus");
+});
   document.getElementById("btnNewMonth").addEventListener("click", () => {
     const input = prompt("Informe o novo mês no formato AAAA-MM (ex: 2026-08):", currentMonthKey());
     if (!input) return;
@@ -404,7 +535,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentMonth = input;
     saveData();
     renderClosing();
-    renderDashboard();
+    renderAll();
   });
   document.getElementById("btnNewClosingItem").addEventListener("click", () => openClosingDialog(null));
   document.getElementById("btnExportClosing").addEventListener("click", exportClosingCSV);
@@ -416,5 +547,5 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById(id).addEventListener("change", renderClosing)
   );
 
-  renderDashboard();
+  renderAll();
 });

@@ -53,10 +53,13 @@
     <div class="section-header">
       <h2>Projeto de Implantação do Sistema</h2>
       <div class="actions">
-        <button class="btn btn-primary" id="btnNewTask">+ Nova Tarefa</button>
-        <button class="btn" id="btnExportProject">Exportar CSV</button>
-      </div>
-    </div>
+  <button class="btn btn-primary" id="btnNewTask">+ Nova Tarefa</button>
+  <button class="btn btn-save-cloud" id="btnSaveProject">
+    Salvar alterações
+  </button>
+  <span class="save-status" id="projectSaveStatus" aria-live="polite"></span>
+  <button class="btn" id="btnExportProject">Exportar CSV</button>
+</div>
 
     <div class="filters">
       <select id="filterFase"><option value="">Todas as fases</option></select>
@@ -93,13 +96,16 @@
     <div class="section-header">
       <h2>Fechamento Mensal Contábil e Fiscal</h2>
       <div class="actions">
-        <select id="monthSelector"></select>
-        <button class="btn" id="btnNewMonth">+ Novo Mês</button>
-        <button class="btn btn-primary" id="btnNewClosingItem">+ Novo Item</button>
-        <button class="btn" id="btnExportClosing">Exportar CSV</button>
-        <button class="btn" id="btnPrintClosing">Imprimir</button>
-      </div>
-    </div>
+  <select id="monthSelector"></select>
+  <button class="btn" id="btnNewMonth">+ Novo Mês</button>
+  <button class="btn btn-primary" id="btnNewClosingItem">+ Novo Item</button>
+  <button class="btn btn-save-cloud" id="btnSaveClosing">
+    Salvar alterações
+  </button>
+  <span class="save-status" id="closingSaveStatus" aria-live="polite"></span>
+  <button class="btn" id="btnExportClosing">Exportar CSV</button>
+  <button class="btn" id="btnPrintClosing">Imprimir</button>
+</div>
 
     <div class="filters">
       <select id="filterArea">

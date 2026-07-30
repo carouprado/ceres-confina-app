@@ -231,3 +231,30 @@ dialog textarea { min-height: 50px; resize: vertical; }
   main { padding: 16px; }
   .topbar { flex-direction: column; align-items: flex-start; }
 }
+.btn-save-cloud {
+  background: var(--dourado);
+  border-color: var(--dourado);
+  color: var(--verde-escuro);
+  font-weight: 600;
+}
+.btn-save-cloud:hover {
+  background: #b9903e;
+  border-color: #b9903e;
+}
+.btn-save-cloud:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.save-status {
+  min-width: 65px;
+  color: var(--cinza);
+  font-size: 12px;
+}
+.save-status.success {
+  color: var(--verde);
+  font-weight: 600;
+}
+.save-status.error {
+  color: var(--vermelho);
+  font-weight: 600;
+}
