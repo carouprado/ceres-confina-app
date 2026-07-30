@@ -84,6 +84,6 @@ const RACI_MATRIX = [
   { atividade: "Apuração de impostos", r: "Analista Fiscal", a: "Gerente", c: "Contador", i: "Diretoria" },
   { atividade: "Fechamento mensal (consolidação)", r: "Gerente", a: "Diretoria", c: "Contador / Fiscal / Financeiro", i: "-" },
   { atividade: "Parametrização e configuração do sistema (projeto)", r: "Consultoria de Implantação", a: "Gerente de Projeto", c: "Financeiro / Contábil / Fiscal", i: "Diretoria" },
-  { atividade: "Testes e homologação", r: "Consultoria de Implantação + área responsável", a: "Gerente de Projeto", c: "Controller", i: "Diretoria" },
+  { atividade: "Testes e homologação", r: "Consultoria de Implantação + área responsável", a: "Gerente de Projeto", c: "Gerente", i: "Diretoria" },
   { atividade: "Go-live", r: "Gerente de Projeto", a: "Diretoria", c: "Todas as áreas", i: "-" },
 ];
